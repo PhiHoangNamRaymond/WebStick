@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<style>
+/* ── Reset ──────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+
+/* ── Tokens ─────────────────────────────── */
+:root{
+  /* system font stack — zero network latency */
+  --font: -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --mono: ui-monospace,'Cascadia Code','Fira Code',monospace;
+
+  --bg:     #0d0d11;
+  --s1:     #15151c;
+  --s2:     #1c1c26;
+  --border: #28283a;
+  --a:      #6c63ff;
+  --a2:     #a78bfa;
+  --txt:    #e2e2ee;
+  --muted:  #666688;
+  --ok:     #34d399;
+  --del:    #f87171;
+  --r:      9px;
+}
+
+/* ── Shell ───────────────────────────────── */
+body{
+  width:360px;min-height:180px;max-height:560px;
+  background:var(--bg);color:var(--txt);
+  font-family:var(--font);font-size:13px;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+
+/* ── Header ──────────────────────────────── */
+#hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 14px 9px;
+  background:var(--s1);border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+#logo{
+  display:flex;align-items:center;gap:7px;
+  font-size:14px;font-weight:700;letter-spacing:-.4px;
+  background:linear-gradient(120deg,var(--a),var(--a2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+#logo span{
+  width:24px;height:24px;border-radius:6px;
+  background:linear-gradient(135deg,var(--a),var(--a2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;-webkit-text-fill-color:#fff;
+}
+#cnt{
+  font:11px/1 var(--mono);color:var(--muted);
+  padding:2px 8px;border-radius:20px;
+  background:var(--s2);border:1px solid var(--border);
+}
+
+/* ── Save bar ────────────────────────────── */
+#savebar{
+  padding:9px 12px;
+  background:var(--s1);border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+#cur{
+  display:flex;align-items:center;gap:8px;
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:var(--r);padding:7px 9px;
+  cursor:pointer;transition:border-color .12s;
+  user-select:none;
+}
+#cur:hover{border-color:var(--a)}
+#cur:active{transform:scale(.99)}
+#cfav{width:16px;height:16px;border-radius:3px;flex-shrink:0;font-size:11px;
+      display:flex;align-items:center;justify-content:center;color:var(--muted)}
+#ctitle{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+        font-size:12px;color:var(--txt)}
+#sbtn{
+  flex-shrink:0;padding:4px 10px;border:none;border-radius:6px;cursor:pointer;
+  background:linear-gradient(120deg,var(--a),var(--a2));
+  color:#fff;font:600 11px/1 var(--font);letter-spacing:.2px;
+  transition:opacity .12s,transform .1s;
+}
+#sbtn:hover{opacity:.88}
+#sbtn:active{transform:scale(.96)}
+#sbtn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+#flash{display:none;gap:4px;align-items:center;
+       font-size:11px;font-weight:600;color:var(--ok)}
+#flash.on{display:flex}
+
+/* ── Search ──────────────────────────────── */
+#sw{padding:8px 12px;flex-shrink:0}
+#si{
+  width:100%;padding:7px 9px 7px 30px;
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:var(--r);color:var(--txt);
+  font:13px var(--font);outline:none;
+  transition:border-color .12s;
+  /* inline SVG search icon — zero HTTP request */
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8' stroke='%23666688' stroke-width='2'/%3E%3Cpath stroke='%23666688' stroke-linecap='round' stroke-width='2' d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:9px center;
+}
+#si::placeholder{color:var(--muted)}
+#si:focus{border-color:var(--a)}
+
+/* ── List ────────────────────────────────── */
+#list{
+  flex:1;overflow-y:auto;padding:0 6px 6px;
+  display:flex;flex-direction:column;gap:1px;
+  contain:content; /* layout+paint containment — strict breaks IntersectionObserver */
+}
+#list::-webkit-scrollbar{width:3px}
+#list::-webkit-scrollbar-track{background:transparent}
+#list::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ── Pin row ─────────────────────────────── */
+.row{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 7px;border-radius:7px;cursor:pointer;
+  transition:background .1s;
+  /* will-change: auto — don't add unless animating */
+}
+.row:hover{background:var(--s2)}
+.row:hover .acts{opacity:1}
+.row:active{background:var(--s2)}
+
+.fav{width:16px;height:16px;border-radius:3px;
+     flex-shrink:0;object-fit:contain;
+     /* decoded async so it doesn't block paint */
+     decoding:async}
+.fav-ph{width:16px;height:16px;border-radius:3px;flex-shrink:0;
+        background:var(--s2);font-size:10px;color:var(--muted);
+        display:flex;align-items:center;justify-content:center}
+
+.info{flex:1;overflow:hidden;min-width:0}
+.name{font-size:12.5px;font-weight:500;white-space:nowrap;
+      overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+.domain{font:10.5px/1.4 var(--mono);color:var(--muted);
+        white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.acts{display:flex;gap:1px;opacity:0;transition:opacity .1s;flex-shrink:0}
+.ab{width:22px;height:22px;border:none;background:transparent;
+    border-radius:4px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;color:var(--muted);font-size:11px;
+    transition:background .1s,color .1s}
+.ab:hover{background:var(--border);color:var(--txt)}
+.ab.d:hover{background:rgba(248,113,113,.15);color:var(--del)}
+
+/* ── Inline rename input ─────────────────── */
+.ri{
+  font:500 12.5px/1 var(--font);
+  background:var(--s1);border:1px solid var(--a);
+  border-radius:4px;color:var(--txt);padding:1px 5px;
+  outline:none;width:100%;
+}
+
+/* ── Empty ───────────────────────────────── */
+#empty{
+  display:none;flex-direction:column;align-items:center;
+  justify-content:center;padding:28px 16px;
+  color:var(--muted);gap:7px;text-align:center;font-size:12px;
+}
+#empty.on{display:flex}
+#empty i{font-size:28px;opacity:.45;font-style:normal}
+
+/* ── Entry animation ─────────────────────── */
+@keyframes fi{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.row{animation:fi .13s ease}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div id="logo"><span>📌</span>QuickPins</div>
+  <span id="cnt">0 link</span>
+</div>
+
+<div id="savebar">
+  <div id="cur">
+    <div id="cfav">🌐</div>
+    <span id="ctitle">…</span>
+    <button id="sbtn">+ Lưu</button>
+    <span id="flash">✓ Đã lưu</span>
+  </div>
+</div>
+
+<div id="sw"><input id="si" type="search" placeholder="Tìm link…" autocomplete="off" spellcheck="false"/></div>
+
+<div id="list"></div>
+<div id="empty"><i>📌</i><span>Chưa có link nào.<br/>Nhấn <b>+ Lưu</b> để ghim trang hiện tại.</span></div>
+
+<script type="module" src="popup.js"></script>
+</body>
+</html>
