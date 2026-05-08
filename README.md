@@ -14,7 +14,7 @@ A lightweight Chrome extension with zero tracking and no account required.
 •  Fully local storage powered by chrome.storage.local
 
  Installation (Development)
-git clone https://github.com/your-username/quickpins.git
+git clone https://github.com/PhiHoangNamRaymond/WebStick
 Load the extension into Chrome
 1. Open chrome://extensions
 2. Enable Developer mode
@@ -36,8 +36,30 @@ quickpins-v3/
 
  Security
 QuickPins is designed following the Least Privilege principle.
-ComponentDescriptionhost_permissions: noneThe extension cannot read website contentsStrict CSPconnect-src 'none' blocks all outbound requestsZero External RequestsNo CDN, analytics, or external APIsSafe DOM RenderingUses textContent and DOM APIs instead of innerHTMLURL ValidationOnly allows http: and https: URLsSecure IDsUses crypto.randomUUID() instead of timestampsPermissions Used
-PermissionPurposestorageSave pinned links locallytabsRead the current tab's URL and titlefaviconLoad favicons from chrome://favicon2/
+Component
+Description
+host_permissions: none
+The extension cannot read website contents
+Strict CSP
+connect-src 'none' blocks all outbound requests
+Zero External Requests
+No CDN, analytics, or external APIs
+Safe DOM Rendering
+Uses textContent and DOM APIs instead of innerHTML
+URL Validation
+Only allows http: and https: URLs
+Secure IDs
+Uses crypto.randomUUID() instead of timestamps
+Permissions Used
+Permission
+Purpose
+storage
+Save pinned links locally
+tabs
+Read the current tab's URL and title
+favicon
+Load favicons from chrome://favicon2/
+
  Privacy
 • No tracking
 • No analytics
